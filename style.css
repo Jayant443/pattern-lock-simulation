@@ -48,11 +48,18 @@ body {
     letter-spacing: -0.01em;
 }
 
+#stopwatch {
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+
 .grid {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 20px;
-    width: 100%;
     max-width: 520px;
     display: flex;
     justify-content: center;
@@ -92,6 +99,7 @@ body {
     gap: 12px;
     flex-wrap: wrap;
     justify-content: center;
+    flex-direction: column;
     position: relative;
 }
 
@@ -108,7 +116,8 @@ body {
 
 #sim-btn,
 #clear-btn,
-#stop-btn {
+#stop-btn,
+#pause-btn {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 13px;
     font-weight: 600;
@@ -116,6 +125,7 @@ body {
     text-transform: uppercase;
     color: var(--text);
     background: transparent;
+    width: 120px;
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 10px 24px;
@@ -125,14 +135,16 @@ body {
 
 #sim-btn:hover:not(:disabled),
 #clear-btn:hover:not(:disabled),
-#stop-btn:hover:not(:disabled) {
+#stop-btn:hover:not(:disabled),
+#pause-btn:hover:not(:disabled) {
     border-color: var(--accent);
     color: var(--accent);
 }
 
 #sim-btn:disabled,
 #clear-btn:disabled,
-#stop-btn:disabled {
+#stop-btn:disabled,
+#pause-btn:disabled {
     opacity: 0.3;
     cursor: not-allowed;
 }

@@ -4,13 +4,17 @@ const simBtn = document.getElementById('sim-btn');
 const clearBtn = document.getElementById('clear-btn');
 const messageEl = document.getElementById('message');
 const stopBtn = document.getElementById('stop-btn');
+const stopwatchEl = document.getElementById('stopwatch');
+const pauseBtn = document.getElementById('pause-btn');
+let swInterval = null, swStart = null;
 
 const rows = 3, cols = 3, r = 7;
 const spacingX = 140, spacingY = 140;
 const offsetX = 80, offsetY = 80;
 
-let locked = false, dragging = null, tempLine = null, simCancelled = false, simTimeout = null;
+let locked = false, dragging = null, tempLine = null, simCancelled = false, simTimeout = null, paused = false, swElapsed = 0, resumeFn = null;
 const circles = [];
+
 
 const positions = {
     1: [0, 0],
@@ -70,12 +74,36 @@ function setLocked(val) {
     simBtn.disabled = val;
     clearBtn.disabled = val;
     stopBtn.disabled = !val;
+    pauseBtn.disabled = !val;
     svg.style.pointerEvents = val ? 'none' : 'all';
 }
 
 function setMessage(text, type = 'info') {
     messageEl.textContent = text;
     messageEl.className = type;
+}
+
+function startStopwatch() {
+    swStart = Date.now();
+    swInterval = setInterval(() => {
+        const elapsed = swElapsed + (Date.now() - swStart);
+        const mins = String(Math.floor(elapsed / 60000)).padStart(2, '0');
+        const secs = String(Math.floor((elapsed % 60000) / 1000)).padStart(2, '0');
+        const tenths = Math.floor((elapsed % 1000) / 100);
+        stopwatchEl.textContent = `${mins}:${secs}.${tenths}`;
+    }, 100);
+}
+
+function stopStopwatch() {
+    clearInterval(swInterval);
+    swElapsed += Date.now() - swStart;
+    swInterval = null;
+}
+
+function resetStopwatch() {
+    stopStopwatch();
+    swElapsed = 0;
+    stopwatchEl.textContent = '00:00.0';
 }
 
 class Circle {
@@ -103,9 +131,9 @@ class Circle {
 
 function drawLine(x1, y1, x2, y2) {
     const l = document.createElementNS(ns, 'line');
-    l.setAttribute('x1', x1); 
+    l.setAttribute('x1', x1);
     l.setAttribute('y1', y1);
-    l.setAttribute('x2', x2); 
+    l.setAttribute('x2', x2);
     l.setAttribute('y2', y2);
     l.setAttribute('class', 'line');
     svg.insertBefore(l, svg.firstChild);
@@ -190,7 +218,7 @@ function onDragEnd(e) {
         svg.removeChild(tempLine); tempLine = null;
     }
     if (target) {
-        drawLine(dragging.x, dragging.y, target.x, target.y); 
+        drawLine(dragging.x, dragging.y, target.x, target.y);
         target.setConnected(true);
     }
     dragging = null;
@@ -223,6 +251,12 @@ function drawPattern(indices, speed = 2, done = null) {
     const to = () => circles.find(c => c.index === indices[segmentIndex + 1]);
     function animate() {
         if (simCancelled) return;
+
+        if (paused) {
+            resumeFn = animate;
+            return;
+        }
+
         if (segmentIndex >= indices.length - 1) {
             if (done) done();
             return;
@@ -256,7 +290,7 @@ function clear() {
     });
     svg.querySelectorAll('.line').forEach(l => l.remove());
     if (tempLine) {
-        svg.removeChild(tempLine); 
+        svg.removeChild(tempLine);
         tempLine = null;
     }
     dragging = null;
@@ -266,13 +300,15 @@ function clear() {
 function simulatePathsSequentially(allPaths, index = 0) {
     if (simCancelled || index >= allPaths.length) {
         setLocked(false);
+        stopStopwatch();
+        resetStopwatch();
         setMessage('');
         return;
     }
     clear();
     setMessage(`${index + 1} of ${allPaths.length}`);
-    drawPattern(allPaths[index], 70, () => {
-        simTimeout = setTimeout(() => simulatePathsSequentially(allPaths, index + 1), 10);
+    drawPattern(allPaths[index], 1000, () => {
+        simTimeout = setTimeout(() => simulatePathsSequentially(allPaths, index + 1));
     });
 }
 
@@ -285,14 +321,40 @@ clearBtn.addEventListener('click', clear);
 stopBtn.addEventListener('click', () => {
     simCancelled = true;
     stopBtn.disabled = true;
+    paused = false;
+    resumeFn = null;
+    pauseBtn.textContent = 'Pause';
     clearTimeout(simTimeout);
+    stopStopwatch();
+    resetStopwatch();
     setLocked(false);
     clear();
+});
+
+pauseBtn.addEventListener('click', () => {
+    if (!paused) {
+        paused = true;
+        pauseBtn.textContent = 'Resume';
+        stopStopwatch();
+    } else {
+        paused = false;
+        pauseBtn.textContent = 'Pause';
+        startStopwatch();
+        if (resumeFn) {
+            resumeFn();
+            resumeFn = null;
+        }
+    }
 });
 
 simBtn.addEventListener('click', () => {
     if (locked) return;
     simCancelled = false;
+    paused = false;
+    resumeFn = null;
+    pauseBtn.textContent = 'Pause';
     setLocked(true);
+    resetStopwatch();
+    startStopwatch();
     setTimeout(() => simulatePathsSequentially(calPaths()), 50);
 });

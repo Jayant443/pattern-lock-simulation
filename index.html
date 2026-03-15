@@ -13,14 +13,20 @@
         <div class="header">
             <h1>Pattern Lock simulation</h1>
             <p id="message"></p>
+            <p id="stopwatch">00:00.0</p>
         </div>
         <div class="grid">
             <svg id="pattern-grid" xmlns="http://www.w3.org/2000/svg"></svg>
         </div>
         <div class="controls">
-            <button id="sim-btn">Simulate</button>
-            <button id="clear-btn">Clear</button>
-            <button id="stop-btn" disabled>Stop</button>
+            <div class="func-btn">
+                <button id="sim-btn">Simulate</button>
+                <button id="clear-btn">Clear</button>
+            </div>
+            <div class="anim-btn">
+                <button id="stop-btn" disabled>Stop</button>
+                <button id="pause-btn" disabled>Pause</button>
+            </div>
         </div>
     </div>
     <script src="script.js"></script>
